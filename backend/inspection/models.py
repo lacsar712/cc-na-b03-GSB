@@ -13,3 +13,19 @@ class Inspection(models.Model):
 
     class Meta:
         ordering = ["-id"]
+
+
+class FilterPreset(models.Model):
+    """命名的查找方案：判词多选 + 灯号包含文字，套用后总表只留同时满足的行。"""
+
+    name = models.CharField("方案名", max_length=40, unique=True)
+    verdicts = models.JSONField("判词", default=list)
+    code_contains = models.CharField("灯号包含", max_length=40, blank=True, default="")
+    created_by = models.CharField("创建人", max_length=64)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name", "id"]
+
+    def __str__(self):
+        return self.name

@@ -1,6 +1,58 @@
 {% extends "base.html" %}
 {% block body %}
 <h1>巡检记录</h1>
+
+<section class="presets">
+  <h2>查找方案</h2>
+  {% if active_preset %}
+    <p class="active-preset">当前套用：「{{ active_preset.name }}」
+      <a href="?clear=1">清除方案，查看全部</a>
+    </p>
+  {% endif %}
+  {% if presets %}
+    <ul class="preset-list">
+    {% for preset in presets %}
+      <li class="{% if active_preset and active_preset.pk == preset.pk %}active{% endif %}">
+        <strong>{{ preset.name }}</strong>
+        <span class="cond">判词：{{ preset.verdicts|join:"、" }}</span>
+        <span class="cond">{% if preset.code_contains %}灯号含「{{ preset.code_contains }}」{% else %}灯号不限{% endif %}</span>
+        <a href="?apply={{ preset.pk }}">套用</a>
+        {% if can_write %}
+          <form method="post" action="{% url 'preset_rename' preset.pk %}" class="inline">
+            {% csrf_token %}
+            <input name="name" value="{{ preset.name }}" aria-label="新方案名" />
+            <button type="submit">改名</button>
+          </form>
+          <form method="post" action="{% url 'preset_delete' preset.pk %}" class="inline"
+                onsubmit="return confirm('确定删除方案「{{ preset.name }}」？');">
+            {% csrf_token %}
+            <button type="submit">删除</button>
+          </form>
+        {% endif %}
+      </li>
+    {% endfor %}
+    </ul>
+  {% else %}
+    <p>还没有保存的方案。</p>
+  {% endif %}
+
+  {% if can_write %}
+    <form class="card" method="post" action="{% url 'preset_create' %}">
+      {% csrf_token %}
+      <h3>保存新方案</h3>
+      <label>方案名</label>
+      <input name="name" />
+      <span class="label-like">判词（可多选）</span>
+      {% for v in verdict_choices %}
+        <label class="check"><input type="checkbox" name="verdicts" value="{{ v }}" /> {{ v }}</label>
+      {% endfor %}
+      <label>灯号包含文字</label>
+      <input name="code_contains" placeholder="留空表示不限灯号" />
+      <button type="submit">保存方案</button>
+    </form>
+  {% endif %}
+</section>
+
 <table>
   <thead><tr><th>编号</th><th>实测光强</th><th>结论</th><th>说明</th><th></th></tr></thead>
   <tbody>
@@ -13,7 +65,11 @@
       <td><a href="{% url 'detail' row.pk %}">详情</a></td>
     </tr>
   {% empty %}
-    <tr><td colspan="5">还没有记录</td></tr>
+    {% if active_preset %}
+      <tr><td colspan="5">没有相符灯</td></tr>
+    {% else %}
+      <tr><td colspan="5">还没有记录</td></tr>
+    {% endif %}
   {% endfor %}
   </tbody>
 </table>

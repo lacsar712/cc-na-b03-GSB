@@ -16,6 +16,22 @@
     input { width: 100%; padding: 8px; box-sizing: border-box; }
     button { margin-top: 14px; background: #0f3d3e; color: #fff; border: 0; padding: 8px 16px; }
     .err { color: #9b1c1c; }
+    .msg { padding: 8px 12px; border-radius: 4px; }
+    .msg.success { background: #dff0e4; color: #0b6b3a; }
+    .msg.error { background: #f6e1e1; color: #9b1c1c; }
+    .presets { background: #fff; padding: 12px 16px; margin-bottom: 16px; }
+    .presets h2 { margin-top: 0; font-size: 18px; }
+    .preset-list { list-style: none; padding: 0; margin: 0 0 10px; }
+    .preset-list li { padding: 6px 0; border-bottom: 1px dashed #d5e0dc; }
+    .preset-list li.active strong { color: #0b6b3a; }
+    .preset-list .cond { color: #4c5b56; margin: 0 8px; }
+    form.inline { display: inline; }
+    form.inline input { width: auto; padding: 4px 6px; }
+    form.inline button { margin-top: 0; padding: 4px 10px; }
+    .active-preset { background: #dff0e4; padding: 8px 12px; border-radius: 4px; }
+    .label-like { display: block; margin: 10px 0 4px; }
+    label.check { display: inline-block; margin-right: 14px; }
+    label.check input { width: auto; }
   </style>
 </head>
 <body>
@@ -28,6 +44,11 @@
       <a href="{% url 'logout' %}">退出</a>
     {% endif %}
   </header>
-  <main>{% block body %}{% endblock %}</main>
+  <main>
+    {% if messages %}
+      {% for message in messages %}<p class="msg {{ message.tags }}">{{ message }}</p>{% endfor %}
+    {% endif %}
+    {% block body %}{% endblock %}
+  </main>
 </body>
 </html>

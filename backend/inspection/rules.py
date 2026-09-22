@@ -1,3 +1,6 @@
+VERDICTS = ("合格", "不合格")
+
+
 def judge(measured_cd: float, required_cd: float, bearing_error_deg: float) -> tuple[str, str]:
     if measured_cd < required_cd:
         return "不合格", "光强不足"
