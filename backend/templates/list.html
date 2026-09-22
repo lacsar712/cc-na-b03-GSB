@@ -1,6 +1,71 @@
 {% extends "base.html" %}
 {% block body %}
 <h1>巡检记录</h1>
+
+{% if messages %}
+  {% for message in messages %}<p class="err">{{ message }}</p>{% endfor %}
+{% endif %}
+
+<section class="schemes">
+  <h2>查找方案</h2>
+  {% if active_scheme %}
+    <div class="active-scheme">
+      当前方案：<strong>{{ active_scheme.name }}</strong>
+      （判词：{% for v in active_scheme.verdict_list %}{{ v }}{% if not forloop.last %}、{% endif %}{% empty %}不限{% endfor %}；
+      灯号含：{{ active_scheme.aid_text|default:"不限" }}）
+      <form method="post" action="{% url 'scheme_clear' %}" class="inline">
+        {% csrf_token %}<button type="submit">看全部</button>
+      </form>
+    </div>
+  {% else %}
+    <p class="active-scheme">未套用方案，显示全部记录。</p>
+  {% endif %}
+
+  <ul class="scheme-list">
+  {% for scheme in schemes %}
+    <li>
+      <span class="{% if active_scheme.pk == scheme.pk %}cur{% endif %}">
+        {{ scheme.name }}
+        （{% for v in scheme.verdict_list %}{{ v }}{% if not forloop.last %}、{% endif %}{% empty %}判词不限{% endfor %}{% if scheme.aid_text %}；灯号含“{{ scheme.aid_text }}”{% endif %}）
+      </span>
+      {% if active_scheme.pk != scheme.pk %}
+      <form method="post" action="{% url 'scheme_apply' scheme.pk %}" class="inline">
+        {% csrf_token %}<button type="submit">套用</button>
+      </form>
+      {% endif %}
+      {% if can_write %}
+      <form method="post" action="{% url 'scheme_rename' scheme.pk %}" class="inline">
+        {% csrf_token %}
+        <input type="text" name="name" value="{{ scheme.name }}" maxlength="40" required>
+        <button type="submit">改名</button>
+      </form>
+      <form method="post" action="{% url 'scheme_delete' scheme.pk %}" class="inline">
+        {% csrf_token %}<button type="submit" class="danger">删除</button>
+      </form>
+      {% endif %}
+    </li>
+  {% empty %}
+    <li>还没有保存的查找方案。</li>
+  {% endfor %}
+  </ul>
+
+  {% if can_write %}
+  <form method="post" action="{% url 'scheme_create' %}" class="card">
+    {% csrf_token %}
+    <h3>新建方案</h3>
+    <label>方案名称</label>
+    <input type="text" name="name" maxlength="40" required>
+    <label>判词（多选，勾哪个留哪个）</label>
+    {% for v in verdict_choices %}
+      <label class="check"><input type="checkbox" name="verdicts" value="{{ v }}"> {{ v }}</label>
+    {% endfor %}
+    <label>灯号中的一段文字</label>
+    <input type="text" name="aid_text" maxlength="40" placeholder="例如 09">
+    <button type="submit">保存方案</button>
+  </form>
+  {% endif %}
+</section>
+
 <table>
   <thead><tr><th>编号</th><th>实测光强</th><th>结论</th><th>说明</th><th></th></tr></thead>
   <tbody>
@@ -13,7 +78,11 @@
       <td><a href="{% url 'detail' row.pk %}">详情</a></td>
     </tr>
   {% empty %}
-    <tr><td colspan="5">还没有记录</td></tr>
+    {% if active_scheme %}
+      <tr><td colspan="5">没有相符灯</td></tr>
+    {% else %}
+      <tr><td colspan="5">还没有记录</td></tr>
+    {% endif %}
   {% endfor %}
   </tbody>
 </table>
